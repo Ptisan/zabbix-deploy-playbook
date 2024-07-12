@@ -1,0 +1,77 @@
+---
+- name: Set up Zabbix on a server
+  hosts: all
+  become: yes
+
+  vars:
+    zabbix_repo: "https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.0-2+ubuntu24.04_all.deb"
+
+  tasks:
+    - name: Install MySQL
+      apt:
+        name: 
+          - mysql-server
+        state: present
+
+    - name: Create Zabbix database
+      mysql_db:
+        name: zabbix
+        state: present
+
+    - name: Create Zabbix database user
+      mysql_user:
+        name: zabbix
+        password: zabbix_password
+        priv: 'zabbix.*:ALL'
+        state: present
+
+    - name: Install Apache2
+      apt:
+        name: apache2
+        state: present
+
+    - name: Download Zabbix repository package
+      apt:
+        deb: "{{ zabbix_repo }}"
+        state: present
+
+    - name: Install Zabbix server, frontend, and agent
+      apt:
+        name: 
+          - zabbix-server-mysql
+          - zabbix-frontend-php
+          - zabbix-agent
+        state: present
+        update_cache: yes
+
+    - name: Import initial schema and data
+      command: "/usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -pzabbix_password zabbix"
+
+    - name: Update Zabbix configuration file
+      lineinfile:
+        path: /etc/zabbix/zabbix_server.conf
+        regexp: '^# DBPassword='
+        line: 'DBPassword=zabbix_password'
+
+    - name: Configure Apache for Zabbix on port 81
+      template:
+        src: zabbix_apache.conf.j2
+        dest: /etc/apache2/sites-available/zabbix.conf
+        mode: '0644'
+
+    - name: Enable Zabbix Apache configuration
+      command: a2ensite zabbix.conf
+
+    - name: Reload Apache
+      service:
+        name: apache2
+        state: reloaded
+
+    - name: Enable and start Zabbix server and agent
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - zabbix-server
+        - zabbix-agent
