@@ -1,0 +1,41 @@
+<VirtualHost *:81>
+  ServerAdmin webmaster@localhost
+  DocumentRoot /usr/share/zabbix
+
+  <Directory /usr/share/zabbix>
+    Options FollowSymLinks
+    AllowOverride None
+    Require all granted
+  </Directory>
+
+  <Directory /usr/share/zabbix/conf>
+    Require all denied
+  </Directory>
+
+  ErrorLog ${APACHE_LOG_DIR}/zabbix_error.log
+  CustomLog ${APACHE_LOG_DIR}/zabbix_access.log combined
+</VirtualHost>
+
+<Directory /usr/share/zabbix>
+  DirectoryIndex index.php
+</Directory>
+
+<Directory /usr/share/zabbix/include>
+  Require all denied
+</Directory>
+
+<Directory /usr/share/zabbix/local>
+  Require all denied
+</Directory>
+
+AddType application/x-httpd-php .php
+
+<IfModule mod_php7.c>
+  php_value max_execution_time 300
+  php_value memory_limit 128M
+  php_value post_max_size 16M
+  php_value upload_max_filesize 2M
+  php_value max_input_time 300
+  php_value always_populate_raw_post_data -1
+  php_value date.timezone Europe/Riga
+</IfModule>
