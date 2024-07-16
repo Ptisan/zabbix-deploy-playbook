@@ -5,6 +5,7 @@
 
   vars:
     zabbix_repo: "https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.0-2+ubuntu24.04_all.deb"
+    ZabbixPass: PASSWORD GOES HERE
 
   tasks:
     - name: Install MySQL
@@ -51,7 +52,7 @@
       lineinfile:
         path: /etc/zabbix/zabbix_server.conf
         regexp: '^# DBPassword='
-        line: 'DBPassword=zabbix_password'
+        line: 'DBPassword="{{ ZabbixPass }}"'
 
     - name: Configure Apache for Zabbix on port 81
       template:
